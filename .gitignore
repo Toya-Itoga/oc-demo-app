@@ -7,3 +7,6 @@ __pycache__/
 **/.DS_Store
 settings.local.json
 ClaudeDirectory-sample.png
+*.pdf
+src/imgs/*
+!src/imgs/.gitkeep

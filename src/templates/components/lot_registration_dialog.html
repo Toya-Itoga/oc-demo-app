@@ -1,0 +1,104 @@
+<!-- ロット登録・編集ダイアログ（HTMXによりインジェクションされる） -->
+
+<!-- サーバーが初期値とモードを注入する（インラインスクリプトは同期実行される） -->
+<script>
+  window.__lotMode = {{ mode | tojson }};
+  {% if lot %}
+  window.__lotForm = {
+    id:           {{ lot.id | tojson }},
+    farm_name:    {{ lot.farm_name | tojson }},
+    house_number: {{ lot.house_number | tojson }},
+    crop_type:    {{ lot.crop_type | tojson }},
+    crop_variety: {{ lot.crop_variety | tojson }},
+    plant_count:  {{ lot.plant_count | tojson }}
+  };
+  {% else %}
+  window.__lotForm = null;
+  {% endif %}
+</script>
+
+<link rel="stylesheet" href="/static/css/lot_registration_dialog.css">
+
+<div class="modal" x-data="lotDialog()" x-init="init()">
+  <div class="lot-dialog">
+
+    <!-- ヘッダ: getter は Alpine proxy でも正しく動作させるためメソッド呼び出し形式にする -->
+    <div class="lot-dialog__header">
+      <div class="lot-dialog__title" x-text="dialogTitle()"></div>
+      <button class="lot-dialog__close" @click="close()">×</button>
+    </div>
+
+    <!-- 本体 -->
+    <div class="lot-dialog__body">
+
+      <!-- ロットID -->
+      <div>
+        <div class="field__label">
+          ロットID
+          <span x-show="isEdit()" class="field__hint">（変更不可）</span>
+        </div>
+        <input class="input"
+               :class="isEdit() ? 'input--readonly' : ''"
+               :readonly="isEdit()"
+               x-model="form.id"
+               placeholder="例: DEMO_LOT4">
+      </div>
+
+      <!-- 農場名 / 棟番号 -->
+      <div class="lot-dialog__grid">
+        <div>
+          <div class="field__label">農場名</div>
+          <input class="input" x-model="form.farm_name" placeholder="例: KAISHI農場">
+        </div>
+        <div>
+          <div class="field__label">棟番号</div>
+          <input class="input" x-model="form.house_number" placeholder="例: 1号棟">
+        </div>
+      </div>
+
+      <!-- 栽培品目 / 栽培品種 -->
+      <div class="lot-dialog__grid">
+        <div>
+          <div class="field__label">栽培品目</div>
+          <input class="input" x-model="form.crop_type" placeholder="例: トマト">
+        </div>
+        <div>
+          <div class="field__label">
+            栽培品種 <span class="field__hint">任意</span>
+          </div>
+          <input class="input" x-model="form.crop_variety" placeholder="例: シンディー">
+        </div>
+      </div>
+
+      <!-- 定植本数 -->
+      <div>
+        <div class="field__label">
+          定植本数 <span class="field__hint">任意</span>
+        </div>
+        <input class="input"
+               type="number"
+               min="0"
+               x-model="form.plant_count"
+               placeholder="例: 540">
+      </div>
+
+    </div><!-- /.lot-dialog__body -->
+
+    <!-- フッタ -->
+    <div class="lot-dialog__footer">
+
+      <!-- 削除ボタン（編集時のみ） -->
+      <div>
+        <button x-show="isEdit()"
+                class="btn btn--danger"
+                @click="deleteLot()">削除</button>
+      </div>
+
+      <div class="lot-dialog__footer-right">
+        <button class="btn btn--neutral" @click="close()">キャンセル</button>
+        <button class="btn btn--primary" @click="submit()" x-text="primaryLabel()"></button>
+      </div>
+
+    </div><!-- /.lot-dialog__footer -->
+  </div><!-- /.lot-dialog -->
+</div><!-- /.modal -->

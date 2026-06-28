@@ -1,0 +1,121 @@
+/* ===== ロット一覧画面 ===== */
+
+.lot-list {
+  padding: 28px 30px 40px;
+}
+
+.lot-list__header {
+  margin-bottom: 22px;
+}
+
+.lot-list__title {
+  font: 800 25px var(--font-display);
+}
+
+.lot-list__count {
+  font-size: 13px;
+  color: var(--c-muted);
+  margin-top: 5px;
+}
+
+.lot-list__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+/* ===== ロットカード ===== */
+.lot-card {
+  position: relative;
+  background: var(--c-surface);
+  border-radius: var(--r-card);
+  padding: 24px 22px 22px;
+  border: 1px solid var(--c-border-card);
+  box-shadow: var(--sh-card);
+  transition: transform .28s, box-shadow .28s;
+}
+
+.lot-card:hover {
+  transform: translateY(-7px);
+  box-shadow: var(--sh-card-hover);
+}
+
+.lot-card__edit {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.lot-card__id {
+  font: 800 24px/1 var(--font-display);
+  letter-spacing: .01em;
+  margin-bottom: 6px;
+}
+
+.lot-card__crop {
+  font-size: 14px;
+  color: var(--c-text-sub);
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.lot-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  border-top: 1px dashed var(--c-dash);
+  padding-top: 16px;
+}
+
+.lot-card__meta-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.lot-card__meta-label {
+  color: var(--c-muted-2);
+}
+
+.lot-card__meta-value {
+  font-weight: 700;
+}
+
+.lot-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lot-card__actions .btn {
+  font-size: 13.5px;
+  padding: 12px;
+  border-radius: 13px;
+}
+
+/* ===== FAB ===== */
+.fab {
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--r-fab);
+  background: var(--c-primary);
+  box-shadow: var(--sh-fab);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 300;
+  cursor: pointer;
+  border: none;
+  transition: transform .3s, box-shadow .3s;
+}
+
+.fab:hover {
+  transform: translateY(-3px) rotate(90deg);
+  box-shadow: 0 16px 32px rgba(111, 174, 107, .65);
+}

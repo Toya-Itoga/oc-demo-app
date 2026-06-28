@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>日報を書く — {{ lot.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/report_registration.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="reportForm()" x-init="init()">
+
+  <!-- サーバーからロットID・既存レポートを注入する -->
+  <script>
+    window.__lotId = {{ lot.id | tojson }};
+    {% if existing %}
+    window.__reportData = {
+      plant_condition: {{ existing.plant_condition }},
+      pest_condition:  {{ existing.pest_condition }},
+      comment:         {{ existing.comment | tojson }},
+      photo_paths:     {{ existing.photo_paths | tojson }}
+    };
+    {% else %}
+    window.__reportData = null;
+    {% endif %}
+  </script>
+
+  <div class="page">
+    <div class="app">
+
+      <!-- トップバー -->
+      <div class="app__topbar">
+        <div class="app__brand">
+          <div class="app__brand-logo">農</div>
+          <div class="app__brand-name">農業日報管理</div>
+        </div>
+      </div>
+
+      <!-- 日報作成フォーム -->
+      <div class="app__screen report-form">
+
+        <!-- 戻るリンク -->
+        <a href="/" class="back-link">
+          <span class="back-link__icon">←</span>
+          ロット一覧へもどる
+        </a>
+
+        <!-- ロットバナー -->
+        <div class="lot-banner">
+          <div>
+            <div class="lot-banner__id">{{ lot.id }}</div>
+            <div class="lot-banner__sub">
+              {{ lot.crop_type }}・{{ lot.crop_variety or '—' }}
+              <span>／ {{ lot.farm_name }} {{ lot.house_number }}</span>
+            </div>
+          </div>
+          <div class="lot-banner__date">
+            <div class="lot-banner__date-label">日付</div>
+            <div class="lot-banner__date-value" id="today-date"></div>
+          </div>
+        </div>
+        <script>
+          document.getElementById("today-date").textContent =
+            new Date().toLocaleDateString("ja-JP", {
+              year: "numeric", month: "numeric", day: "numeric"
+            }).replace(/\//g, ".");
+        </script>
+
+        <!-- 評価スライダー -->
+        <div class="rating-grid">
+
+          <!-- 植物の状態 -->
+          <div class="rating">
+            <div class="rating__title">植物の状態</div>
+            <div class="rating__track-wrap">
+              <div class="rating__track"></div>
+              <div class="rating__fill" :style="'width:' + plantFill()"></div>
+              <div class="rating__steps">
+                <template x-for="n in [1,2,3,4,5]" :key="n">
+                  <button type="button"
+                          :class="stepClass(plantCondition, n)"
+                          @click="setPlant(n)"
+                          x-text="n"></button>
+                </template>
+              </div>
+            </div>
+            <div class="rating__scale">
+              <span>悪い</span><span>良い</span>
+            </div>
+          </div>
+
+          <!-- 病害虫の状況 -->
+          <div class="rating">
+            <div class="rating__title">病害虫の状況</div>
+            <div class="rating__track-wrap">
+              <div class="rating__track"></div>
+              <div class="rating__fill" :style="'width:' + pestFill()"></div>
+              <div class="rating__steps">
+                <template x-for="n in [1,2,3,4,5]" :key="n">
+                  <button type="button"
+                          :class="stepClass(pestCondition, n)"
+                          @click="setPest(n)"
+                          x-text="n"></button>
+                </template>
+              </div>
+            </div>
+            <div class="rating__scale">
+              <span>悪い</span><span>良い</span>
+            </div>
+          </div>
+
+        </div><!-- /.rating-grid -->
+
+        <!-- 写真 -->
+        <div class="photos">
+          <div class="photos__head">
+            <span class="photos__title">写真</span>
+            <span class="photos__limit">最大3枚まで</span>
+          </div>
+          <div class="photos__list">
+
+            <!-- サムネイル一覧 -->
+            <template x-for="(photo, idx) in photos" :key="idx">
+              <div class="photo">
+                <img :src="photo.url" :alt="photo.name">
+                <button type="button" class="photo__remove" @click="removePhoto(idx)">×</button>
+                <span class="photo__name" x-text="photo.name"></span>
+              </div>
+            </template>
+
+            <!-- 追加ボタン（最大3枚未満の場合に表示） -->
+            <div class="photo-add"
+                 x-show="canAddPhoto"
+                 @click="openFilePicker()">
+              <span class="photo-add__icon">＋</span>
+              <span class="photo-add__label">写真を追加</span>
+            </div>
+
+          </div>
+
+          <!-- 非表示のファイル入力 -->
+          <input type="file"
+                 x-ref="fileInput"
+                 accept="image/*"
+                 multiple
+                 style="display:none"
+                 @change="handleFiles($event)">
+        </div>
+
+        <!-- コメント -->
+        <div class="field">
+          <div class="field__title">コメント</div>
+          <textarea class="textarea"
+                    x-model="comment"
+                    maxlength="200"
+                    placeholder="本日の作業内容や気づいたことを記録してください"
+                    rows="4"></textarea>
+          <div class="char-count">
+            <span x-text="comment.length"></span> / 200
+          </div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="form-actions">
+          <a href="/" class="btn btn--neutral">キャンセル</a>
+          <button type="button"
+                  class="btn btn--primary"
+                  :disabled="submitting"
+                  @click="submit()">
+            <span x-show="!submitting">保存する</span>
+            <span x-show="submitting">保存中…</span>
+          </button>
+        </div>
+
+      </div><!-- /.report-form -->
+    </div><!-- /.app -->
+  </div><!-- /.page -->
+
+  <script src="/static/js/report_registration.js"></script>
+</body>
+</html>

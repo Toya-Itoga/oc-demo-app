@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>日報閲覧 — {{ lot.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/report_show.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="reportShowPage()" x-init="init()">
+
+  {% if is_new %}
+  <!-- 保存直後: トーストメッセージを注入する -->
+  <script>window.__toastMsg = "日報を保存しました";</script>
+  {% endif %}
+
+  <div class="page">
+    <div class="app">
+
+      <!-- トップバー -->
+      <div class="app__topbar">
+        <div class="app__brand">
+          <div class="app__brand-logo">農</div>
+          <div class="app__brand-name">農業日報管理</div>
+        </div>
+      </div>
+
+      <!-- 日報閲覧 -->
+      <div class="app__screen report-view">
+
+        <!-- 戻るリンク -->
+        <a href="/" class="back-link">
+          <span class="back-link__icon">←</span>
+          ロット一覧へもどる
+        </a>
+
+        <!-- ヘッダ -->
+        <div class="report-view__header">
+          <div>
+            <div class="report-header__id">{{ lot.id }}</div>
+            <div class="report-header__sub">
+              {{ lot.crop_type }}・{{ lot.crop_variety or '—' }}
+              <span>／ {{ lot.farm_name }} {{ lot.house_number }}</span>
+            </div>
+          </div>
+          <div class="report-header__date">
+            <div class="report-header__date-label">日報の日付</div>
+            <div class="report-header__date-value">{{ date_jp }}</div>
+          </div>
+        </div>
+
+        <!-- 2カラム -->
+        <div class="report-view__body">
+
+          <!-- 左カラム -->
+          <div>
+            <!-- センサーデータ -->
+            <div class="section-label">センサーデータ</div>
+            <div class="sensor-grid">
+              <div class="sensor-card">
+                <div class="sensor-card__label">🌡 気温</div>
+                <div class="sensor-card__value">
+                  {{ "%.1f" | format(report.temperature) }}<span class="sensor-card__unit">℃</span>
+                </div>
+              </div>
+              <div class="sensor-card">
+                <div class="sensor-card__label">💧 湿度</div>
+                <div class="sensor-card__value">
+                  {{ "%.1f" | format(report.humidity) }}<span class="sensor-card__unit">％</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 作業者の入力 -->
+            <div class="section-label">作業者の入力</div>
+            <div class="worker-input">
+
+              <!-- 評価ドット -->
+              <div class="rating-readout-row">
+                <div>
+                  <div class="rating-readout__label">植物の状態</div>
+                  <div class="rating-readout__inner">
+                    <div class="rating-readout__dots">
+                      {% for n in range(1, 6) %}
+                      <span class="dot {% if n <= report.plant_condition %}dot--filled{% endif %}"></span>
+                      {% endfor %}
+                    </div>
+                    <span class="rating-readout__value">{{ report.plant_condition }} / 5</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="rating-readout__label">病害虫の状況</div>
+                  <div class="rating-readout__inner">
+                    <div class="rating-readout__dots">
+                      {% for n in range(1, 6) %}
+                      <span class="dot {% if n <= report.pest_condition %}dot--filled{% endif %}"></span>
+                      {% endfor %}
+                    </div>
+                    <span class="rating-readout__value">{{ report.pest_condition }} / 5</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 写真 -->
+              {% if photo_paths %}
+              <div class="worker-photos">
+                {% for path in photo_paths %}
+                <div class="worker-photo">
+                  <img src="/{{ path }}" alt="作業写真">
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              <!-- コメント -->
+              <div class="worker-comment__label">コメント</div>
+              <div class="worker-comment__text">{{ report.comment or '（コメントなし）' }}</div>
+            </div>
+
+            <!-- AIまとめ -->
+            <script>
+              window.__aiSummary = {{ report.ai_summary | tojson }};
+              window.__isNew = {{ 'true' if is_new else 'false' }};
+            </script>
+            <div class="ai-summary"
+                 x-data="aiSummary(window.__aiSummary, window.__isNew)"
+                 x-init="init()">
+
+              <!-- ローディング（保存直後のみ） -->
+              <div x-show="phase === 'loading'" class="ai-loading">
+                <div class="ai-loading__spinner"></div>
+                <span class="ai-loading__text">AIが日報を要約中</span>
+                <div class="ai-loading__dots">
+                  <span>.</span><span>.</span><span>.</span>
+                </div>
+              </div>
+
+              <!-- テキスト表示 -->
+              <div x-show="phase !== 'loading'">
+                <div class="ai-summary__badge-row">
+                  <span class="ai-summary__badge">✦ AIまとめ</span>
+                  <span class="ai-summary__note">作業者の入力をもとに自動生成</span>
+                </div>
+                <div class="ai-summary__text">
+                  <span x-text="shown"></span>
+                  <span class="ai-summary__caret" x-show="phase === 'typing'"></span>
+                </div>
+              </div>
+
+            </div><!-- /.ai-summary -->
+          </div><!-- /左カラム -->
+
+          <!-- 右カラム: 日報タイムライン -->
+          <div>
+            <div class="report-timeline__label">このロットの日報</div>
+            <div class="timeline-list">
+              {% for r in timeline %}
+              <a href="{{ r.url }}"
+                 class="timeline-card {% if r.is_active %}timeline-card--active{% endif %}">
+                <div>
+                  <div class="timeline-card__date">{{ r.date_label }}</div>
+                  <div class="timeline-card__meta">植物 {{ r.plant }} ・ 病害虫 {{ r.pest }}</div>
+                </div>
+                <span class="timeline-card__tag">
+                  {{ '表示中' if r.is_active else '見る' }}
+                </span>
+              </a>
+              {% endfor %}
+            </div>
+          </div><!-- /右カラム -->
+
+        </div><!-- /.report-view__body -->
+      </div><!-- /.report-view -->
+
+      <!-- トースト -->
+      <div class="toast" x-show="toastVisible" x-cloak>
+        <span class="toast__icon">✓</span>
+        <span x-text="toastMsg"></span>
+      </div>
+
+    </div><!-- /.app -->
+  </div><!-- /.page -->
+
+  <script src="/static/js/report_show.js"></script>
+</body>
+</html>

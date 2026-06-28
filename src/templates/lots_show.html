@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>農業日報管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/lots_show.css">
+  <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="lotsPage()"
+      x-init="init()"
+      @toast.window="showToast($event.detail.msg)"
+      @dialog-close.window="$refs.dialogContainer.innerHTML = ''">
+
+  {% if toast_msg %}
+  <!-- 保存完了トーストを Alpine 初期化後に発火する -->
+  <script>window.__toastMsg = {{ toast_msg | tojson }};</script>
+  {% endif %}
+
+  <div class="page">
+    <div class="app">
+
+      <!-- トップバー -->
+      <div class="app__topbar">
+        <div class="app__brand">
+          <div class="app__brand-logo">農</div>
+          <div class="app__brand-name">農業日報管理</div>
+        </div>
+      </div>
+
+      <!-- ロット一覧 -->
+      <div class="app__screen lot-list">
+        <div class="lot-list__header">
+          <div class="lot-list__title">ロット一覧</div>
+          <div class="lot-list__count">登録されている栽培ロット {{ lots | length }} 件</div>
+        </div>
+
+        <div class="lot-list__grid">
+          {% for lot in lots %}
+          <div class="lot-card">
+            <!-- 編集ボタン -->
+            <button class="lot-card__edit btn btn--ghost btn--sm"
+                    hx-get="/lots/{{ lot.id }}/dialog/edit"
+                    hx-target="#dialog-container"
+                    hx-swap="innerHTML">編集</button>
+
+            <div class="lot-card__id">{{ lot.id }}</div>
+            <div class="lot-card__crop">{{ lot.crop_type }}・{{ lot.crop_variety or '—' }}</div>
+
+            <div class="lot-card__meta">
+              <div class="lot-card__meta-row">
+                <span class="lot-card__meta-label">農場</span>
+                <span class="lot-card__meta-value">{{ lot.farm_name }}</span>
+              </div>
+              <div class="lot-card__meta-row">
+                <span class="lot-card__meta-label">棟番号</span>
+                <span class="lot-card__meta-value">{{ lot.house_number }}</span>
+              </div>
+              <div class="lot-card__meta-row">
+                <span class="lot-card__meta-label">定植本数</span>
+                <span class="lot-card__meta-value">
+                  {% if lot.plant_count %}{{ lot.plant_count }} 本{% else %}—{% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="lot-card__actions">
+              <a href="/lots/{{ lot.id }}/report/new" class="btn btn--primary">日報を書く</a>
+              <a href="/lots/{{ lot.id }}/report/latest" class="btn btn--outline">日報を見る</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- FAB: ロット新規登録 -->
+        <button class="fab"
+                hx-get="/lots/dialog/new"
+                hx-target="#dialog-container"
+                hx-swap="innerHTML"
+                title="ロットを追加">＋</button>
+      </div>
+
+      <!-- トースト -->
+      <div class="toast" x-show="toastVisible" x-cloak>
+        <span class="toast__icon">✓</span>
+        <span x-text="toastMsg"></span>
+      </div>
+
+      <!-- ダイアログコンテナ（HTMXがここに差し込む） -->
+      <div id="dialog-container" x-ref="dialogContainer"></div>
+
+    </div>
+  </div>
+
+  <!-- ダイアログJSをメインページで先読みすることでHTMX差し込み時の定義漏れを防ぐ -->
+  <script src="/static/js/lot_registration_dialog.js"></script>
+  <script src="/static/js/lots_show.js"></script>
+</body>
+</html>

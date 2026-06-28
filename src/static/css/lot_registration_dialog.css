@@ -1,0 +1,85 @@
+/* ===== ロット登録・編集ダイアログ ===== */
+
+.modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(40, 55, 38, .42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+.lot-dialog {
+  width: 460px;
+  max-width: 92%;
+  background: var(--c-surface);
+  border-radius: var(--r-dialog);
+  box-shadow: var(--sh-dialog);
+  overflow: hidden;
+  animation: pop var(--dur-dialog) var(--ease-pop) both;
+}
+
+.lot-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px 0;
+}
+
+.lot-dialog__title {
+  font: 800 20px var(--font-display);
+}
+
+.lot-dialog__close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--c-ghost);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-muted-2);
+  font-size: 17px;
+  cursor: pointer;
+  border: none;
+  transition: background .2s;
+}
+
+.lot-dialog__close:hover { background: var(--c-ghost-hover); }
+
+.lot-dialog__body {
+  padding: 18px 26px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lot-dialog__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.lot-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 26px 24px;
+  margin-top: 6px;
+}
+
+.lot-dialog__footer-right {
+  display: flex;
+  gap: 10px;
+}
+
+.lot-dialog .btn {
+  font-size: 13.5px;
+  padding: 11px 22px;
+  border-radius: 12px;
+}
+
+.lot-dialog .btn--primary {
+  padding: 11px 28px;
+}
